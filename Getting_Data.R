@@ -90,16 +90,18 @@ Lyrics$Lyrics[which(Lyrics$name=="Panther Like a Panther (Miracle Mix) [feat. Tr
 Lyrics$Lyrics[which(Lyrics$name=="36 Inch Chain - Live From SXSW / 2015")] <- get_lyrics_url("https://genius.com/Run-the-jewels-36-inch-chain-live-from-sxsw-2015-lyrics") %>% select(line)
 Lyrics$Lyrics[which(Lyrics$name=="Tougher Colder Killer - Live From SXSW / 2015")] <- get_lyrics_url("https://genius.com/Run-the-jewels-tougher-colder-killer-live-from-sxsw-2015-lyrics") %>% select(line)
 
+#saveRDS(Lyrics,"Data/Lyrics.rds")
 
 #Cleaning up the data to just have the name of the song, album, and lyrics
+Lyrics <- read_rds("Data/Lyrics.rds")
 RTJ_Songs <- Lyrics %>% select(album,name,Lyrics)
 
 #Making the album column a factor, with the levels in order of album release date
 RTJ_Songs$album <- factor(RTJ_Songs$album,
                           levels=c("Run the Jewels",
-                                   "Run  the Jewels 2",
+                                   "Run The Jewels 2",
                                    "Run the Jewels 3",
-                                   "RTJ 4"),
+                                   "RTJ4"),
                           labels=c("Run the Jewels",
                                    "RTJ 2",
                                    "RTJ 3",
