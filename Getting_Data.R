@@ -2,6 +2,7 @@
 library(tidyverse)
 library(Rspotify)
 library(genius)
+library(geniusr)
 
 source("Spotify_Key.R")
 
@@ -79,6 +80,16 @@ percent_captured <- round((nrow(Lyrics)-nrow(missed))/nrow(Lyrics)*100,digits = 
 
 
 # Getting Lyrics for the Songs genius_lyrics could not get ----------------
+Lyrics$Lyrics[which(Lyrics$name=="a few words for the firing squad (radiation)")] <- get_lyrics_url("https://genius.com/Run-the-jewels-a-few-words-for-the-firing-squad-radiation-lyrics") %>% select(line)
+Lyrics$Lyrics[which(Lyrics$name=="Hey Kids (Bumaye) [feat. Danny Brown]")] <- get_lyrics_url("https://genius.com/Run-the-jewels-hey-kids-bumaye-lyrics") %>% select(line)
+Lyrics$Lyrics[which(Lyrics$name=="Thieves! (Screamed the Ghost) [feat. Tunde Adebimpe]")] <- get_lyrics_url("https://genius.com/Run-the-jewels-thieves-screamed-the-ghost-lyrics") %>% select(line)
+Lyrics$Lyrics[which(Lyrics$name=="Panther Like a Panther (Miracle Mix) [feat. Trina]")] <- get_lyrics_url("https://genius.com/Run-the-jewels-panther-like-a-panther-miracle-mix-lyrics") %>% select(line)
+Lyrics$Lyrics[which(Lyrics$name=="36 Inch Chain - Live From SXSW / 2015")] <- get_lyrics_url("https://genius.com/Run-the-jewels-36-inch-chain-live-from-sxsw-2015-lyrics") %>% select(line)
+Lyrics$Lyrics[which(Lyrics$name=="Tougher Colder Killer - Live From SXSW / 2015")] <- get_lyrics_url("https://genius.com/Run-the-jewels-tougher-colder-killer-live-from-sxsw-2015-lyrics") %>% select(line)
+#Lyrics$Lyrics[which(Lyrics$name=="Creown - The Alchemist Remix")] <- get_lyrics_url("") %>% select(line)
+#Lyrics$Lyrics[which(Lyrics$name=="Angelsnuggler - Dan The Automator Remix")] <- get_lyrics_url("") %>% select(line)
+#Lyrics$Lyrics[which(Lyrics$name=="")] <- get_lyrics_url("") %>% select(line)
+
 
 
 
