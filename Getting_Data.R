@@ -14,7 +14,9 @@ source("Spotify_Key.R")
 (RTJ_Albums<-getAlbums("4RnBFZRiMLRyZy0AzzTg2C",token=keys) %>% as_tibble())
 
 #MAKING SURE TO REMOVE THEIR INSTRUMENTAL ALBUM
-RTJ_Albums <- RTJ_Albums %>% distinct(name,.keep_all = T) %>% filter(name!="Run the Jewels Instrumentals")
+RTJ_Albums <- RTJ_Albums %>% distinct(name,.keep_all = T) %>% 
+  filter(name!="Run the Jewels Instrumentals",
+         name!="Meow The Jewels")
 
 #Getting an empty tibble with the proper column names
 RTJ_Songs <- tibble(id=character(0),name=character(0),track_numer=integer(0),album=character(0))
@@ -86,10 +88,12 @@ Lyrics$Lyrics[which(Lyrics$name=="Thieves! (Screamed the Ghost) [feat. Tunde Ade
 Lyrics$Lyrics[which(Lyrics$name=="Panther Like a Panther (Miracle Mix) [feat. Trina]")] <- get_lyrics_url("https://genius.com/Run-the-jewels-panther-like-a-panther-miracle-mix-lyrics") %>% select(line)
 Lyrics$Lyrics[which(Lyrics$name=="36 Inch Chain - Live From SXSW / 2015")] <- get_lyrics_url("https://genius.com/Run-the-jewels-36-inch-chain-live-from-sxsw-2015-lyrics") %>% select(line)
 Lyrics$Lyrics[which(Lyrics$name=="Tougher Colder Killer - Live From SXSW / 2015")] <- get_lyrics_url("https://genius.com/Run-the-jewels-tougher-colder-killer-live-from-sxsw-2015-lyrics") %>% select(line)
-#Lyrics$Lyrics[which(Lyrics$name=="Creown - The Alchemist Remix")] <- get_lyrics_url("") %>% select(line)
-#Lyrics$Lyrics[which(Lyrics$name=="Angelsnuggler - Dan The Automator Remix")] <- get_lyrics_url("") %>% select(line)
-#Lyrics$Lyrics[which(Lyrics$name=="")] <- get_lyrics_url("") %>% select(line)
 
 
+#Cleaning up the data to just have the name of the song, album, and lyrics
+RTJ_Songs <- Lyrics %>% select(album,name,Lyrics)
+
+#Saving the data
+saveRDS(RTJ_Songs,"Data/RTJ_Songs.rds")
 
 
