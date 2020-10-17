@@ -11,7 +11,9 @@ source("Spotify_Key.R")
 
 #Getting Albums and their IDs
 (RTJ_Albums<-getAlbums("4RnBFZRiMLRyZy0AzzTg2C",token=keys) %>% as_tibble())
-RTJ_Albums <- RTJ_Albums %>% distinct(name,.keep_all = T)
+
+#MAKING SURE TO REMOVE THEIR INSTRUMENTAL ALBUM
+RTJ_Albums <- RTJ_Albums %>% distinct(name,.keep_all = T) %>% filter(name!="Run the Jewels Instrumentals")
 
 #Getting an empty tibble with the proper column names
 RTJ_Songs <- tibble(id=character(0),name=character(0),track_numer=integer(0),album=character(0))
@@ -28,3 +30,55 @@ for (i in 1:nrow(RTJ_Albums)) {
   #Bind the tibble made from the given album id to the big tibble
   RTJ_Songs <- RTJ_Songs %>% rbind(tobind)
 }
+
+#Adding a column for artist name
+RTJ_Songs <- RTJ_Songs %>% mutate(artist="Run The Jewels")
+
+# Getting Lyrics ----------------------------------------------------------
+
+Lyrics <- RTJ_Songs %>% mutate(Lyrics=1)
+
+Lyrics <- Lyrics %>% mutate(song2=name) %>% 
+  #Removing any parentheses, ususally used for features
+  separate(col = song2, into = c("song2", "extra"), sep = " [(]") %>%
+  select(-extra) %>% 
+  #Removing hyphens (both with and without spaces in front), they usually come before a "live from XYZ"
+  separate(song2, into = c("song2", "extra"), sep = " -") %>%
+  select(-extra) %>% 
+  separate(song2, into = c("song2", "extra"), sep = "-") %>% 
+  select(-extra) %>%
+  #Removing punctuation
+  mutate(song2=str_remove_all(string = song2, pattern = "[[:punct:]]"))
+
+#Geting lyrics using genius_lyrics
+for (i in 1:nrow(Lyrics)) {
+  tryCatch({
+    print(i)
+    Lyrics$Lyrics[i] <- genius_lyrics(artist = Lyrics$artist[i],
+                                      song = Lyrics$song2[i],
+                                      info = "simple") %>% 
+      dplyr::select(lyric)
+  }, error=function(e){print(e)}
+  )
+}
+
+missed <- Lyrics[1,] %>% head(0)
+
+for (i in 1:nrow(Lyrics)) {
+  print(i)
+  if (!is.character(Lyrics$Lyrics[[i]])) {
+    missed[i,] <- Lyrics[i,]
+  }   else {
+    missed[i,] <- NA
+  }
+}
+
+#Seeing how many songs I got the lyrics for versus how many I missed
+missed <- missed %>% filter(!is.na(name))
+percent_captured <- round((nrow(Lyrics)-nrow(missed))/nrow(Lyrics)*100,digits = 1)
+
+
+# Getting Lyrics for the Songs genius_lyrics could not get ----------------
+
+
+
