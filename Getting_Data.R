@@ -92,9 +92,9 @@ Lyrics$Lyrics[which(Lyrics$name=="Tougher Colder Killer - Live From SXSW / 2015"
 
 #saveRDS(Lyrics,"Data/Raw_Lyrics.rds")
 
-#Cleaning up the data to just have the name of the song, album, and lyrics
+#Cleaning up the data to just have the name of the song, album, track number, and lyrics
 Lyrics <- read_rds("Data/Raw_Lyrics.rds")
-RTJ_Songs <- Lyrics %>% select(album,name,Lyrics)
+RTJ_Songs <- Lyrics %>% select(album,name,Lyrics,track_number)
 
 #Making the album column a factor, with the levels in order of album release date
 RTJ_Songs$album <- factor(RTJ_Songs$album,

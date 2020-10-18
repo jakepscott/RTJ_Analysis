@@ -32,7 +32,7 @@ RTJ_lyrics <- RTJ_lyrics %>% select(album,song,lyrics)
 RTJ_lyrics <- RTJ_lyrics %>% unnest_tokens(word,lyrics)
 
 #Censoring Words
-RTJ_lyrics %>% mutate(word_clean=case_when(word=="fuck"~"f*ck",
+RTJ_lyrics <- RTJ_lyrics %>% mutate(word_clean=case_when(word=="fuck"~"f*ck",
                                 word=="fucked"~"f*cked",
                                 word=="shit"~"sh*t",
                                 word=="bitch"~"b*tch",
