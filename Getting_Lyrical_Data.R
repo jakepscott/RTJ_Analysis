@@ -31,5 +31,13 @@ RTJ_lyrics <- RTJ_lyrics %>% select(album,song,lyrics)
 #Unnesting tokens (so each row is a word and the album+song it came from)
 RTJ_lyrics <- RTJ_lyrics %>% unnest_tokens(word,lyrics)
 
+#Censoring Words
+RTJ_lyrics %>% mutate(word_clean=case_when(word=="fuck"~"f*ck",
+                                word=="fucked"~"f*cked",
+                                word=="shit"~"sh*t",
+                                word=="bitch"~"b*tch",
+                                word=="dick"~"d*ck",
+                                TRUE~as.character(word)))
+
 #Saving
 saveRDS(RTJ_lyrics,"Data/RTJ_lyrics.rds")

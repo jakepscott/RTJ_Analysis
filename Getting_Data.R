@@ -90,7 +90,7 @@ Lyrics$Lyrics[which(Lyrics$name=="Panther Like a Panther (Miracle Mix) [feat. Tr
 Lyrics$Lyrics[which(Lyrics$name=="36 Inch Chain - Live From SXSW / 2015")] <- get_lyrics_url("https://genius.com/Run-the-jewels-36-inch-chain-live-from-sxsw-2015-lyrics") %>% select(line)
 Lyrics$Lyrics[which(Lyrics$name=="Tougher Colder Killer - Live From SXSW / 2015")] <- get_lyrics_url("https://genius.com/Run-the-jewels-tougher-colder-killer-live-from-sxsw-2015-lyrics") %>% select(line)
 
-#saveRDS(Lyrics,"Data/Lyrics.rds")
+#saveRDS(Lyrics,"Data/Raw_Lyrics.rds")
 
 #Cleaning up the data to just have the name of the song, album, and lyrics
 Lyrics <- read_rds("Data/Raw_Lyrics.rds")
