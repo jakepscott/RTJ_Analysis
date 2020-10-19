@@ -41,10 +41,12 @@ for (i in 1:4) {
 #for the proportion of words outside the given album are made up by that given word. So if the album is
 #RTJ4 and the word is week, the percent_outside column, which is .029, means that week makes up .029% of words in 
 #RTJ1,RTJ2,and RTJ3
-RTJ_lyrics <- RTJ_lyrics %>% select(album,word,word_clean) %>% left_join(outside_values,by=c("album","word"))
+Relative_Importance <- RTJ_lyrics %>% 
+  select(album,word,word_clean) %>% 
+  left_join(outside_values,by=c("album","word"))
 
 #Making album back into an ordered factor
-RTJ_lyrics$album <- factor(RTJ_lyrics$album,
+Relative_Importance$album <- factor(Relative_Importance$album,
                           levels=c("Run the Jewels",
                                    "RTJ 2",
                                    "RTJ 3",
@@ -54,8 +56,11 @@ RTJ_lyrics$album <- factor(RTJ_lyrics$album,
                                    "RTJ 3",
                                    "RTJ 4"))
 
+#Saving so I don't need to run the above for loop each time
+saveRDS(Relative_Importance,"Data/Relative_Importance.rds")
+
 # Getting Within Album Proportion -----------------------------------------
-RTJ_lyrics <- RTJ_lyrics %>% 
+Relative_Importance <- Relative_Importance %>% 
   group_by(album,word) %>% 
   mutate(n=n()) %>% 
   ungroup() %>% 
@@ -66,14 +71,14 @@ RTJ_lyrics <- RTJ_lyrics %>%
 
 
 # Getting Difference ------------------------------------------------------
-RTJ_lyrics <- RTJ_lyrics %>% mutate(difference=percent_inside-percent_outside)
+Relative_Importance <- Relative_Importance %>% mutate(difference=percent_inside-percent_outside)
 
 
 # Graphing ----------------------------------------------------------------
-RTJ_lyrics <- RTJ_lyrics %>% distinct(album,word,.keep_all = T)
+Relative_Importance <- Relative_Importance %>% distinct(album,word,.keep_all = T)
 
 
-RTJ_lyrics %>% 
+Relative_Importance %>% 
   group_by(album) %>% 
   top_n(10,difference) %>% 
   ungroup() %>% 
@@ -94,8 +99,8 @@ album_covers <- tibble(album=c("Run the Jewels", "RTJ 2", "RTJ 3", "RTJ 4"),
                                      "Data/RTJ3_Album_Cover.PNG",
                                      "Data/RTJ4_Album_Cover.PNG"))
 
-test <- left_join(RTJ_lyrics,album_covers)
-test$album <- factor(test$album,
+Relative_Importance <- left_join(Relative_Importance,album_covers)
+Relative_Importance$album <- factor(Relative_Importance$album,
                      levels=c("Run the Jewels",
                               "RTJ 2",
                               "RTJ 3",
@@ -109,7 +114,7 @@ test$album <- factor(test$album,
 
 
 #Smoothing the graph
-top_10 <- test %>% 
+top_10 <- Relative_Importance %>% 
   group_by(album) %>% 
   top_n(10,difference) %>% 
   ungroup()
