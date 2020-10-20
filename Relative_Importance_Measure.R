@@ -56,8 +56,6 @@ Relative_Importance$album <- factor(Relative_Importance$album,
                                    "RTJ 3",
                                    "RTJ 4"))
 
-#Saving so I don't need to run the above for loop each time
-saveRDS(Relative_Importance,"Data/Relative_Importance.rds")
 
 # Getting Within Album Proportion -----------------------------------------
 Relative_Importance <- Relative_Importance %>% 
@@ -73,8 +71,11 @@ Relative_Importance <- Relative_Importance %>%
 # Getting Difference ------------------------------------------------------
 Relative_Importance <- Relative_Importance %>% mutate(difference=percent_inside-percent_outside)
 
+#Saving so I don't need to run the above for loop each time
+saveRDS(Relative_Importance,"Data/Relative_Importance.rds")
 
 # Graphing ----------------------------------------------------------------
+Relative_Importance <- read_rds("Data/Relative_Importance.rds")
 Relative_Importance <- Relative_Importance %>% distinct(album,word,.keep_all = T)
 
 
@@ -142,7 +143,7 @@ smooth_top_10 %>%
   labs(y="Relative Importance",
        caption = "Plot: @jakepscott2020 | Data: Spotify and Genius",
        title="Which words are uniquely important for each album?",
-       subtitle = "Relative importance calculated by subtracting percent of words made up by a given word outside of a given album from the percent of total words within an album made up by that word") +
+       subtitle = "Relative importance calculated by subtracting percent of words made up by a given word outside of a given album from the percent of total words within that album made up by that word") +
   theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
   theme(plot.title.position = "plot",
         plot.title = element_text(face="bold", size = rel(2.5), color="white"),
