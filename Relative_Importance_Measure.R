@@ -121,10 +121,8 @@ smooth_top_10 <- top_10 %>% head(0) %>% mutate(difference_smooth=double(0))
 
 for (i in 1:nrow(top_10)) {
   print(i)
-  for (z in 1:length(seq(0,top_10$difference[i],by=.1))) {
-    print(z)
-    sequence <- seq(0,top_10$difference[i],by=.1)
-    to_bind <- top_10[i,] %>% mutate(difference_smooth=sequence[z])
+  for (z in seq(0,top_10$difference[i],by=.1)) {
+    to_bind <- top_10[i,] %>% mutate(difference_smooth=z)
     smooth_top_10 <- smooth_top_10 %>% rbind(to_bind)
   }
 }
