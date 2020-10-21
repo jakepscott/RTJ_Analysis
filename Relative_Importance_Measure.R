@@ -74,10 +74,10 @@ saveRDS(Relative_Importance,"Data/Relative_Importance.rds")
 
 # Graphing ----------------------------------------------------------------
 Relative_Importance <- read_rds("Data/Relative_Importance.rds")
-Relative_Importance <- Relative_Importance %>% distinct(album,word,.keep_all = T)
+Relative_Importance_Clean <- Relative_Importance %>% distinct(album,word,.keep_all = T)
 
 
-Relative_Importance %>% 
+Relative_Importance_Clean %>% 
   group_by(album) %>% 
   top_n(10,difference) %>% 
   ungroup() %>% 
@@ -98,8 +98,8 @@ album_covers <- tibble(album=c("Run the Jewels", "RTJ 2", "RTJ 3", "RTJ 4"),
                                      "Data/RTJ3_Album_Cover.PNG",
                                      "Data/RTJ4_Album_Cover.PNG"))
 
-Relative_Importance <- left_join(Relative_Importance,album_covers)
-Relative_Importance$album <- factor(Relative_Importance$album,
+Relative_Importance_Clean <- left_join(Relative_Importance_Clean,album_covers)
+Relative_Importance_Clean$album <- factor(Relative_Importance_Clean$album,
                      levels=c("Run the Jewels",
                               "RTJ 2",
                               "RTJ 3",
@@ -113,7 +113,7 @@ Relative_Importance$album <- factor(Relative_Importance$album,
 
 
 #Smoothing the graph
-top_10 <- Relative_Importance %>% 
+top_10 <- Relative_Importance_Clean %>% 
   group_by(album) %>% 
   top_n(10,difference) %>% 
   ungroup()
@@ -154,4 +154,12 @@ smooth_top_10 %>%
         panel.grid = element_blank(),
         strip.text = element_text(face="bold",colour = "white",size=rel(1.2)),
         plot.background = element_rect(fill="grey20"))
+
+
+# Relative Importance and Dispersion --------------------------------------
+RTJ_lyrics %>% 
+  filter(word=="kill") %>% 
+  group_by(album) %>% 
+  mutate(test=length(unique(song))) %>% distinct(album,.keep_all = T)
+
   
