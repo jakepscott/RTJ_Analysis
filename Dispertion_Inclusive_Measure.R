@@ -1,4 +1,7 @@
-outside_values <- tibble(album=character(0),word=character(0),percent_outside=double(0))
+outside_values <- tibble(album=character(0),
+                         word=character(0),
+                         percent_outside=double(0),
+                         outside_scaling=double(0))
 for (i in 1:4) {
   #For each album...
   print(paste("i is",i))
@@ -15,10 +18,22 @@ for (i in 1:4) {
     #Get the number of times the given word appears outside the given album
     total_word_of_interest_outside <- RTJ_lyrics %>% filter(album!=album_to_analyze,
                                                             word==word_of_interest) %>% nrow()
+    
+    
     #Make the proportion
     percent_outside_to_paste <- (total_word_of_interest_outside/total_outside_words)*100
+    
+    #Get the percent of songs outside the album of interest that the given word is in
+    num_outside_songs <- RTJ_lyrics %>% filter(album!=album_to_analyze) %>% distinct(song) %>% nrow() #num of outside songs
+    songs_word_is_in <- RTJ_lyrics %>% #Get number of songs word is in
+      filter(album!=album_to_analyze, 
+             word==word_of_interest) %>% distinct(song) %>% nrow()
+    outside_scaling_to_paste <- songs_word_is_in/num_outside_songs #make scaling measure
     #Make into a tibble
-    to_bind <- tibble(album=album_to_analyze,word=word_of_interest,percent_outside=percent_outside_to_paste)
+    to_bind <- tibble(album=album_to_analyze,
+                      word=word_of_interest,
+                      percent_outside=percent_outside_to_paste,
+                      outside_scaling=outside_scaling_to_paste)
     #Bind onto a big tibble which will have each album-word pair and the corresponding percent_outside column
     outside_values <- outside_values %>% rbind(to_bind)
   }
