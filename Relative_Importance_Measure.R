@@ -11,7 +11,6 @@ RTJ_lyrics <- RTJ_lyrics %>% anti_join(stop_words)
 #of all words made up by that word outside the given album. So if the album is RTJ2 and the word
 #is run, the percent_outside column will be the proportion of words outside RTJ2 that are "run"
 outside_values <- tibble(album=character(0),word=character(0),percent_outside=double(0))
-
 for (i in 1:4) {
   #For each album...
   print(paste("i is",i))
@@ -36,7 +35,6 @@ for (i in 1:4) {
     outside_values <- outside_values %>% rbind(to_bind)
   }
 }
-
 #Join the outside_values tibble to the RTJ_lyrics tibble, so for each word with will now have the value
 #for the proportion of words outside the given album are made up by that given word. So if the album is
 #RTJ4 and the word is week, the percent_outside column, which is .029, means that week makes up .029% of words in 

@@ -11,33 +11,36 @@ top_10_tf_idf <- tf_idf %>%
 top_10_RI <- top_10
 
 
-# What others words does mine grab but tf_idf does not and why --------------------
+# What words does mine grab but tf_idf does not and why --------------------
 top_10_RI %>% anti_join(top_10_tf_idf)
 
-diffs <- tf_idf %>% head(0)
+#This filters the dataframe of important words from my measure to just hold the ones not captured by 
+#tf_idf
+diffs_mine <- tf_idf %>% head(0)
 for (i in (top_10_RI %>% anti_join(top_10_tf_idf) %>% pull(word_clean))) {
   to_bind <- tf_idf %>% filter(word_clean==i)
-  diffs <- diffs %>% rbind(to_bind)
+  diffs_mine <- diffs_mine %>% rbind(to_bind)
 }
 
-diffs %>% arrange(desc(n)) %>% group_by(word_clean) %>% top_n(1,n) %>% left_join(top_10_RI)
-diffs %>% arrange(word_clean,desc(n)) %>% left_join(Relative_Importance) %>% 
-  select(word_clean,n,percent_inside) %>% View()
+
+diffs_mine %>% arrange(word_clean,desc(n)) %>% left_join(Relative_Importance) %>% 
+  select(word_clean,n,percent_inside,percent_outside,difference,tf,idf,tf_idf)
+
 
 
 #Mine may be better when there is less of a clear distinction, in which case idf is a bad measure,
 #Moves things down too much
 
-# What  words does tf_idf grab but  mine does not and why --------------------
+# What  words does tf_idf grab but mine does not and why --------------------
 top_10_tf_idf %>% anti_join(top_10_RI) %>% View()
 
-diffs <- Relative_Importance %>% head(0)
+diffs_tf <- Relative_Importance %>% head(0)
 for (i in (top_10_tf_idf %>% anti_join(top_10_RI) %>% pull(word_clean))) {
   to_bind <- Relative_Importance %>% filter(word_clean==i)
-  diffs <- diffs %>% rbind(to_bind)
+  diffs_tf <- diffs %>% rbind(to_bind)
 }
 
-diffs %>% arrange(desc(n))
+diffs_tf %>% arrange(desc(n))
 
 
 # Kill is clear example of why my measure is better -----------------------
