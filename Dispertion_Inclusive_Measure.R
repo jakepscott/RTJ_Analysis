@@ -1,0 +1,50 @@
+outside_values <- tibble(album=character(0),word=character(0),percent_outside=double(0))
+for (i in 1:4) {
+  #For each album...
+  print(paste("i is",i))
+  album_names <- c("Run the Jewels", "RTJ 2", "RTJ 3", "RTJ 4")
+  album_to_analyze <- album_names[i]
+  for (z in 1:nrow(RTJ_lyrics %>% filter(album==album_to_analyze) %>% distinct(word))) {
+    #For each word in the given album
+    print(paste("z is",z))
+    words <- RTJ_lyrics %>% filter(album==album_to_analyze) %>%  distinct(word) %>% pull(word)
+    word_of_interest <- words[z]
+    
+    #Get the number of words outside the album
+    total_outside_words <- RTJ_lyrics %>% filter(album!=album_to_analyze) %>% distinct(word) %>% nrow()
+    #Get the number of times the given word appears outside the given album
+    total_word_of_interest_outside <- RTJ_lyrics %>% filter(album!=album_to_analyze,
+                                                            word==word_of_interest) %>% nrow()
+    #Make the proportion
+    percent_outside_to_paste <- (total_word_of_interest_outside/total_outside_words)*100
+    #Make into a tibble
+    to_bind <- tibble(album=album_to_analyze,word=word_of_interest,percent_outside=percent_outside_to_paste)
+    #Bind onto a big tibble which will have each album-word pair and the corresponding percent_outside column
+    outside_values <- outside_values %>% rbind(to_bind)
+  }
+}
+
+
+Relative_Importance %>% 
+  #Getting a song column back
+  cbind(RTJ_lyrics$song) %>% 
+  as_tibble() %>% 
+  rename("song"=`RTJ_lyrics$song`) %>% 
+  #Getting percent_inside
+  group_by(album,word) %>% 
+  mutate(n=n()) %>% 
+  ungroup() %>% 
+  group_by(album) %>% 
+  mutate(total_words=n()) %>% 
+  ungroup() %>%
+  mutate(prop_inside=(n/total_words)) %>% 
+  #Getting proportion of songs a given word is in
+  group_by(album,word) %>% 
+  mutate(song_appearances=length(unique(song))) %>% 
+  ungroup() %>% 
+  group_by(album) %>% 
+  mutate(total_songs=length(unique(song))) %>% 
+  ungroup() %>% 
+  mutate(prop_songs_in=(song_appearances/total_songs)) %>% 
+  #Multipling proportion of words in an album made up by word x by the proportion of songs word x is in
+  mutate(scaled_prop_inside=prop_inside*prop_songs_in) 
