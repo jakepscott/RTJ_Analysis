@@ -1,6 +1,6 @@
 outside_values <- tibble(album=character(0),
                          word=character(0),
-                         percent_outside=double(0),
+                         prop_outside=double(0),
                          outside_scaling=double(0))
 for (i in 1:4) {
   #For each album...
@@ -21,7 +21,7 @@ for (i in 1:4) {
     
     
     #Make the proportion
-    percent_outside_to_paste <- (total_word_of_interest_outside/total_outside_words)*100
+    prop_outside_to_paste <- (total_word_of_interest_outside/total_outside_words)
     
     #Get the percent of songs outside the album of interest that the given word is in
     num_outside_songs <- RTJ_lyrics %>% filter(album!=album_to_analyze) %>% distinct(song) %>% nrow() #num of outside songs
@@ -32,15 +32,30 @@ for (i in 1:4) {
     #Make into a tibble
     to_bind <- tibble(album=album_to_analyze,
                       word=word_of_interest,
-                      percent_outside=percent_outside_to_paste,
+                      prop_outside=prop_outside_to_paste,
                       outside_scaling=outside_scaling_to_paste)
-    #Bind onto a big tibble which will have each album-word pair and the corresponding percent_outside column
+    #Bind onto a big tibble which will have each album-word pair and the corresponding prop_outside column
     outside_values <- outside_values %>% rbind(to_bind)
   }
 }
+outside_values <- outside_values %>% mutate(scaled_prop_outside=prop_outside*outside_scaling)
 
+Relative_Importance <- RTJ_lyrics %>% 
+  select(album,word,word_clean) %>% 
+  left_join(outside_values,by=c("album","word"))
 
-Relative_Importance %>% 
+#Making album back into an ordered factor
+Relative_Importance$album <- factor(Relative_Importance$album,
+                                    levels=c("Run the Jewels",
+                                             "RTJ 2",
+                                             "RTJ 3",
+                                             "RTJ 4"),
+                                    labels=c("Run the Jewels",
+                                             "RTJ 2",
+                                             "RTJ 3",
+                                             "RTJ 4"))
+
+Relative_Importance <- Relative_Importance %>% 
   #Getting a song column back
   cbind(RTJ_lyrics$song) %>% 
   as_tibble() %>% 
@@ -63,3 +78,5 @@ Relative_Importance %>%
   mutate(prop_songs_in=(song_appearances/total_songs)) %>% 
   #Multipling proportion of words in an album made up by word x by the proportion of songs word x is in
   mutate(scaled_prop_inside=prop_inside*prop_songs_in) 
+
+test <- Relative_Importance %>% mutate(difference=scaled_prop_inside-scaled_prop_outside)
