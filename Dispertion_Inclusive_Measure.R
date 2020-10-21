@@ -80,3 +80,15 @@ Relative_Importance <- Relative_Importance %>%
   mutate(scaled_prop_inside=prop_inside*prop_songs_in) 
 
 test <- Relative_Importance %>% mutate(difference=scaled_prop_inside-scaled_prop_outside)
+test_clean <- test %>% distinct(album,word,.keep_all = T)
+test_clean %>% 
+  group_by(album) %>% 
+  top_n(10,difference) %>% 
+  ungroup() %>% 
+  mutate(word_clean=reorder_within(x=word_clean,by = difference,within = album)) %>% 
+  ggplot(aes(x=word_clean,y=difference,fill=album)) +
+  geom_col() +
+  facet_wrap(~album,scales = "free_y") +
+  coord_flip() +
+  scale_x_reordered() +
+  scale_y_continuous(expand=c(0,0))
