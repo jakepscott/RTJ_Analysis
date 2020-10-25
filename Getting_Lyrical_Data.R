@@ -39,6 +39,7 @@ RTJ_lyrics <- RTJ_lyrics %>% mutate(word_clean=case_when(word=="fuck"~"f*ck",
                                 word=="shit"~"sh*t",
                                 word=="bitch"~"b*tch",
                                 word=="dick"~"d*ck",
+                                word=="nigga"~"n*gga",
                                 TRUE~as.character(word)))
 
 #Saving

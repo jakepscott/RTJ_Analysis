@@ -122,3 +122,66 @@ Disp_Relative_Importance_Clean %>%
   coord_flip() +
   scale_x_reordered() +
   scale_y_continuous(expand=c(0,0))
+
+
+# Album Covers for Bars ---------------------------------------------------
+
+#Getting album colors
+
+album_covers <- tibble(album=c("Run the Jewels", "RTJ 2", "RTJ 3", "RTJ 4"),
+                       album_cover=c("Data/RTJ1_Album_Cover.PNG",
+                                     "Data/RTJ2_Album_Cover.PNG",
+                                     "Data/RTJ3_Album_Cover.PNG",
+                                     "Data/RTJ4_Album_Cover.PNG"))
+
+Disp_Relative_Importance_Clean <- left_join(Disp_Relative_Importance_Clean,album_covers)
+Disp_Relative_Importance_Clean$album <- factor(Disp_Relative_Importance_Clean$album,
+                                          levels=c("Run the Jewels",
+                                                   "RTJ 2",
+                                                   "RTJ 3",
+                                                   "RTJ 4"),
+                                          labels=c("Run the Jewels",
+                                                   "RTJ 2",
+                                                   "RTJ 3",
+                                                   "RTJ 4"))
+
+#Getting smoothed top 10
+
+top_10 <- Disp_Relative_Importance_Clean %>% 
+  group_by(album) %>% 
+  top_n(10,difference) %>% 
+  ungroup()
+
+smooth_top_10 <- top_10 %>% head(0) %>% mutate(difference_smooth=double(0))
+
+for (i in 1:nrow(top_10)) {
+  print(i)
+  for (z in seq(0,top_10$difference[i],by=.00075)) {
+    to_bind <- top_10[i,] %>% mutate(difference_smooth=z)
+    smooth_top_10 <- smooth_top_10 %>% rbind(to_bind)
+  }
+}
+
+smooth_top_10 %>%
+  mutate(word_clean=reorder_within(x=word_clean,by = difference,within = album)) %>% 
+  ggplot(aes(x=word_clean,y=difference_smooth,fill=album)) +
+  geom_image(aes(image=album_cover),asp = 2, size = .045) +
+  facet_wrap(~album,scales = "free_y") +
+  coord_flip() +
+  scale_x_reordered() +
+  labs(y="Relative Importance",
+       caption = "Plot: @jakepscott2020 | Data: Spotify and Genius",
+       title="Which words are uniquely important for each album?",
+       subtitle = "Relative importance calculated by subtracting percent of words made up by a given word outside of a given album from the percent of total words within that album made up by that word") +
+  theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
+  theme(plot.title.position = "plot",
+        plot.title = element_text(face="bold", size = rel(2.5), color="white"),
+        plot.subtitle = element_text(size=rel(1),colour = "grey70"),
+        plot.caption = element_text(face = "italic", size = rel(0.8), 
+                                    color = "grey70"),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(color="white"),
+        axis.text = element_text(color="white",size = rel(1)), 
+        panel.grid = element_blank(),
+        strip.text = element_text(face="bold",colour = "white",size=rel(1.2)),
+        plot.background = element_rect(fill="grey20"))
