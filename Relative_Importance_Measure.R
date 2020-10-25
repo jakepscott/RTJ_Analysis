@@ -85,7 +85,7 @@ smooth_top_10_tf_idf %>%
         strip.text = element_text(face="bold",colour = "white",size=rel(1.2)),
         plot.background = element_rect(fill="grey20"))
 
-  # Getting Outside Proportion ----------------------------------------------
+ # Getting Outside Proportion ----------------------------------------------
 #First I make an empty tibble which will eventually contain the album, word, and proportion
 #of all words made up by that word outside the given album. So if the album is RTJ2 and the word
 #is run, the percent_outside column will be the proportion of words outside RTJ2 that are "run"
@@ -98,7 +98,7 @@ for (i in c("Run the Jewels", "RTJ 2", "RTJ 3", "RTJ 4")) {
     total_outside_words <- RTJ_lyrics %>% 
       filter(album!=i) %>% 
       distinct(word) %>% 
-      nrow()
+      nrow() 
     #Get the number of times the given word appears outside the given album
     total_word_of_interest_outside <- RTJ_lyrics %>% 
       filter(album!=i,

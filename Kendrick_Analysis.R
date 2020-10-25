@@ -3,6 +3,9 @@ library(tidyverse)
 library(Rspotify)
 library(genius)
 library(geniusr)
+library(readr)
+library(tidytext)
+library(ggimage)
 
 source("Spotify_Key.R")
 
@@ -103,14 +106,15 @@ Kendrick_Songs <- Lyrics %>% select(album,name,Lyrics,track_number)
 
 #Making the album column a factor, with the levels in order of album release date
 Kendrick_Songs$album <- factor(Kendrick_Songs$album,
-                          levels=c("DAMN.",
-                                   "To Pimp A Butterfly",
+                          levels=c("Section.80",
                                    "good kid, m.A.A.d city",
-                                   "Section.80"),
-                          labels=c("DAMN.",
                                    "To Pimp A Butterfly",
+                                   "DAMN."
+                                   ),
+                          labels=c("Section.80",
                                    "good kid, m.A.A.d city",
-                                   "Section.80"))
+                                   "To Pimp A Butterfly",
+                                   "DAMN."))
 
 #Saving the data
 saveRDS(Kendrick_Songs,"Data/Kendrick_Songs.rds")
@@ -148,3 +152,231 @@ Kendrick_lyrics <- Kendrick_lyrics %>% select(album,song,lyrics,track_number)
 #Unnesting tokens (so each row is a word and the album+song it came from)
 Kendrick_lyrics <- Kendrick_lyrics %>% unnest_tokens(word,lyrics)
 
+
+#Censoring Words
+Kendrick_lyrics <- Kendrick_lyrics %>% mutate(word_clean=case_when(word=="fuck"~"f*ck",
+                                                         word=="fucked"~"f*cked",
+                                                         word=="fucking"~"f*cking",
+                                                         word=="shit"~"sh*t",
+                                                         word=="bitch"~"b*tch",
+                                                         word=="dick"~"d*ck",
+                                                         word=="nigga"~"n*gga",
+                                                         TRUE~as.character(word)))
+
+#Removing missing words
+Kendrick_lyrics <- Kendrick_lyrics %>% filter(!is.na(word))
+
+#Saving
+saveRDS(Kendrick_lyrics,"Data/Kendrick_lyrics.rds")
+
+
+# Relative Importance Measures --------------------------------------------
+
+#Getting font for graphs
+windowsFonts(`Roboto Condensed`=windowsFont("Roboto Condensed"))
+
+#Reading in Data
+Kendrick_lyrics <- read_rds("Data/Kendrick_lyrics.rds")
+data("stop_words")
+Kendrick_lyrics <- Kendrick_lyrics %>% anti_join(stop_words)
+
+
+# tf_idf ------------------------------------------------------------------
+#Getting tf_idf values
+tf_idf <- Kendrick_lyrics %>% count(album,word_clean) %>% bind_tf_idf(term = word_clean,document = album,n = n)
+
+#Getting top 10 words for each album by tf-idf
+top_10_tf_idf <- tf_idf %>% 
+  group_by(album) %>% 
+  top_n(10,tf_idf) %>% 
+  ungroup()
+
+#Making the plot smooth so I can use album covers for the bars
+#By smooth I mean I need values to place an album from zero to the tf-idf value for each word
+#So I need a row for 0 to .00312 by increments of .001 for buzzin in DAMN. 
+smooth_top_10_tf_idf <- top_10_tf_idf %>% head(0) %>% mutate(difference_smooth=double(0))
+
+for (i in 1:nrow(top_10_tf_idf)) {
+  print(i)
+  for (z in seq(0,top_10_tf_idf$tf_idf[i],by=.001)) {
+    to_bind <- top_10_tf_idf[i,] %>% mutate(tf_idf_smooth=z)
+    smooth_top_10_tf_idf <- smooth_top_10_tf_idf %>% rbind(to_bind)
+  }
+}
+
+#Getting the album covers themselves
+album_covers <- tibble(album=c("DAMN.", "To Pimp A Butterfly", "good kid, m.A.A.d city", "Section.80"),
+                       album_cover=c("Data/DAMN_Album.jpg",
+                                     "Data/To_Pimp_A_Butterfly.jpg",
+                                     "Data/goodkidmadcity.jpg",
+                                     "Data/Section80.jpg"))
+
+smooth_top_10_tf_idf <- left_join(smooth_top_10_tf_idf,album_covers)
+
+#Making album back into an ordered factor
+smooth_top_10_tf_idf$album <- factor(smooth_top_10_tf_idf$album,
+                                     levels=c("Section.80",
+                                              "good kid, m.A.A.d city",
+                                              "To Pimp A Butterfly",
+                                              "DAMN."
+                                     ),
+                                     labels=c("Section.80",
+                                              "good kid, m.A.A.d city",
+                                              "To Pimp A Butterfly",
+                                              "DAMN."))
+
+smooth_top_10_tf_idf %>%
+  mutate(word_clean=reorder_within(x=word_clean,by = tf_idf,within = album)) %>% 
+  ggplot(aes(x=word_clean,y=tf_idf_smooth,fill=album)) +
+  geom_image(aes(image=album_cover),asp = 2, size = .04) +
+  facet_wrap(~album,scales = "free_y") +
+  coord_flip() +
+  scale_x_reordered() +
+  labs(y="Relative Importance",
+       caption = "Plot: @jakepscott2020 | Data: Spotify and Genius",
+       title="Which words are uniquely important for each album?",
+       subtitle = "Relative importance calculated by subtracting percent of words made up by a given word outside of a given album from the percent of total words within that album made up by that word") +
+  theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
+  theme(plot.title.position = "plot",
+        plot.title = element_text(face="bold", size = rel(2.5), color="white"),
+        plot.subtitle = element_text(size=rel(1),colour = "grey70"),
+        plot.caption = element_text(face = "italic", size = rel(0.8), 
+                                    color = "grey70"),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(color="white"),
+        axis.text = element_text(color="white",size = rel(1)), 
+        panel.grid = element_blank(),
+        strip.text = element_text(face="bold",colour = "white",size=rel(1.2)),
+        plot.background = element_rect(fill="grey10"))
+
+
+# Getting Proportional Importance Values ----------------------------------
+#First I make an empty tibble which will eventually contain the album, word, and proportion
+#of all words made up by that word outside the given album. So if the album is DAMN. and the word
+#is run, the percent_outside column will be the proportion of words outside DAMN. that are "run"
+outside_values <- tibble(album=character(0),word=character(0),percent_outside=double(0))
+tictoc::tic()
+for (i in c("Section.80", "good kid, m.A.A.d city", "To Pimp A Butterfly", "DAMN.")) {
+  print(i)
+  for (z in Kendrick_lyrics %>% filter(album==i) %>% distinct(word) %>% pull(word)) {
+    #Get the number of words outside the album
+    total_outside_words <- Kendrick_lyrics %>% 
+      filter(album!=i) %>% 
+      distinct(word) %>% 
+      nrow() 
+    #Get the number of times the given word appears outside the given album
+    total_word_of_interest_outside <- Kendrick_lyrics %>% 
+      filter(album!=i,
+             word==z) %>% 
+      nrow()
+    #Make the proportion
+    percent_outside_to_paste <- (total_word_of_interest_outside/total_outside_words)*100
+    #Make into a tibble
+    to_bind <- tibble(album=i,word=z,percent_outside=percent_outside_to_paste)
+    #Bind onto a big tibble which will have each album-word pair and the corresponding percent_outside column
+    outside_values <- outside_values %>% rbind(to_bind)
+  }
+}
+tictoc::toc()
+#Join the outside_values tibble to the Kendrick_lyrics tibble, so for each word with will now have the value
+#for the proportion of words outside the given album are made up by that given word. So if the album is
+#DAMN and the word is "week", the percent_outside column, which is .029, means that week makes up .029% of words in 
+#"Section.80", "good kid, m.A.A.d city", and "To Pimp A Butterfly"
+Relative_Importance <- Kendrick_lyrics %>% 
+  select(album,word,word_clean) %>% 
+  left_join(outside_values,by=c("album","word"))
+
+#Making album back into an ordered factor
+Relative_Importance$album <- factor(Relative_Importance$album,
+                                    levels=c("Section.80",
+                                             "good kid, m.A.A.d city",
+                                             "To Pimp A Butterfly",
+                                             "DAMN."
+                                    ),
+                                    labels=c("Section.80",
+                                             "good kid, m.A.A.d city",
+                                             "To Pimp A Butterfly",
+                                             "DAMN."))
+
+# Getting Within Album Proportion -----------------------------------------
+Relative_Importance <- Relative_Importance %>% 
+  group_by(album,word) %>% 
+  mutate(n=n()) %>% 
+  ungroup() %>% 
+  group_by(album) %>% 
+  mutate(total_words=n()) %>% 
+  ungroup() %>%
+  mutate(percent_inside=(n/total_words)*100)
+
+
+# Getting Difference ------------------------------------------------------
+Relative_Importance <- Relative_Importance %>% mutate(difference=percent_inside-percent_outside)
+
+#Saving so I don't need to run the above for loop each time
+saveRDS(Relative_Importance,"Data/Kendrick_Relative_Importance.rds")
+
+# Graphing ----------------------------------------------------------------
+Relative_Importance <- read_rds("Data/Kendrick_Relative_Importance.rds")
+Relative_Importance_Clean <- Relative_Importance %>% distinct(album,word,.keep_all = T)
+
+# Graphing with Album Covers ----------------------------------------------
+#Smoothing the graph
+top_10 <- Relative_Importance_Clean %>% 
+  group_by(album) %>% 
+  top_n(10,difference) %>% 
+  ungroup()
+
+smooth_top_10 <- top_10 %>% head(0) %>% mutate(difference_smooth=double(0))
+
+for (i in 1:nrow(top_10)) {
+  print(i)
+  for (z in seq(0,top_10$difference[i],by=.075)) {
+    to_bind <- top_10[i,] %>% mutate(difference_smooth=z)
+    smooth_top_10 <- smooth_top_10 %>% rbind(to_bind)
+  }
+}
+
+#Getting the album covers
+album_covers <- tibble(album=c("DAMN.", "To Pimp A Butterfly", "good kid, m.A.A.d city", "Section.80"),
+                       album_cover=c("Data/DAMN_Album.jpg",
+                                     "Data/To_Pimp_A_Butterfly.jpg",
+                                     "Data/goodkidmadcity.jpg",
+                                     "Data/Section80.jpg"))
+#Joining to the data
+smooth_top_10 <- left_join(smooth_top_10,album_covers)
+#Making the album column an ordered factor again 
+smooth_top_10$album <- factor(smooth_top_10$album,
+                              levels=c("Section.80",
+                                       "good kid, m.A.A.d city",
+                                       "To Pimp A Butterfly",
+                                       "DAMN."
+                              ),
+                              labels=c("Section.80",
+                                       "good kid, m.A.A.d city",
+                                       "To Pimp A Butterfly",
+                                       "DAMN."))
+
+
+smooth_top_10 %>%
+  mutate(word_clean=reorder_within(x=word_clean,by = difference,within = album)) %>% 
+  ggplot(aes(x=word_clean,y=difference_smooth,fill=album)) +
+  geom_image(aes(image=album_cover),asp = 2, size = .04,nudge_y=-.025, nudge_x = .001) +
+  facet_wrap(~album,scales = "free_y") +
+  coord_flip() +
+  scale_x_reordered() +
+  labs(y="Relative Importance",
+       caption = "Plot: @jakepscott2020 | Data: Spotify and Genius",
+       title="Which words are uniquely important for each album?",
+       subtitle = "Relative importance calculated by subtracting percent of words made up by a given word outside of a given album from the percent of total words within that album made up by that word") +
+  theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
+  theme(plot.title.position = "plot",
+        plot.title = element_text(face="bold", size = rel(2.5), color="white"),
+        plot.subtitle = element_text(size=rel(1),colour = "grey70"),
+        plot.caption = element_text(face = "italic", size = rel(0.8), 
+                                    color = "grey70"),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(color="white"),
+        axis.text = element_text(color="white",size = rel(1)), 
+        panel.grid = element_blank(),
+        strip.text = element_text(face="bold",colour = "white",size=rel(1.2)),
+        plot.background = element_rect(fill="grey20"))
