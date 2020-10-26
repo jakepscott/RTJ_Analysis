@@ -23,8 +23,8 @@ for (i in (top_10_RI %>% anti_join(top_10_tf_idf) %>% pull(word_clean))) {
 }
 
 
-diffs_mine %>% arrange(word_clean,desc(n)) %>% left_join(Relative_Importance) %>% 
-  select(word_clean,n,percent_inside,percent_outside,difference,tf,idf,tf_idf)
+diffs_mine %>% arrange(word_clean,desc(n)) %>% left_join(Relative_Importance_Clean) %>% 
+  select(album, word_clean,n,percent_inside,percent_outside,difference,tf,idf,tf_idf) %>% View()
 
 
 
