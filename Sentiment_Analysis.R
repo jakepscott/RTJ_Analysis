@@ -23,9 +23,10 @@ RTJ_sentiment %>%
   scale_x_continuous(breaks = seq(-5,5,1))
 
   RTJ_sentiment %>% 
-    count(album,sentiment) %>% 
     group_by(album) %>% 
     mutate(avg_sentiment=mean(sentiment)) %>% 
+    ungroup() %>% 
+    group_by()
     ggplot() +
     geom_col(aes(sentiment,n)) +
     geom_vline(aes(xintercept = avg_sentiment)) +
