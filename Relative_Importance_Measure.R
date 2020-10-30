@@ -71,7 +71,7 @@ smooth_top_10_tf_idf %>%
   labs(y="Relative Importance",
        caption = "Plot: @jakepscott2020 | Data: Spotify and Genius",
        title="Which words are uniquely important for each album?",
-       subtitle = "Relative importance calculated by subtracting percent of words made up by a given word outside of a given album from the percent of total words within that album made up by that word") +
+       subtitle = "Relative importance calculated using term frequency inverse document frequency") +
   theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
   theme(plot.title.position = "plot",
         plot.title = element_text(face="bold", size = rel(2.5), color="white"),
@@ -160,7 +160,7 @@ Relative_Importance_Clean %>%
   top_n(10,difference) %>% 
   ungroup() %>% 
   mutate(word_clean=reorder_within(x=word_clean,by = difference,within = album)) %>% 
-  ggplot(aes(x=word_clean,y=difference/100,fill=album)) +
+  ggplot(aes(x=word_clean,y=difference,fill=album)) +
   geom_col() +
   facet_wrap(~album,scales = "free_y") +
   coord_flip() +
