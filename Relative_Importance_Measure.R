@@ -160,7 +160,7 @@ Relative_Importance_Clean %>%
   top_n(10,difference) %>% 
   ungroup() %>% 
   mutate(word_clean=reorder_within(x=word_clean,by = difference,within = album)) %>% 
-  ggplot(aes(x=word_clean,y=difference,fill=album)) +
+  ggplot(aes(x=word_clean,y=difference/100,fill=album)) +
   geom_col() +
   facet_wrap(~album,scales = "free_y") +
   coord_flip() +
