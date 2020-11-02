@@ -84,7 +84,7 @@ table <- diffs_mine %>%
       domain = NULL
     ))
 )
-gtsave(kill,"Figures/Kill_Table.png")
+#gtsave(kill,"Figures/Kill_Table.png")
 
 
 # run ---------------------------------------------------------------------
@@ -195,5 +195,5 @@ table %>%
       domain = NULL
     ))
 )
-gtsave(Slave,"Figures/Slave_Table.png")
+#gtsave(Slave,"Figures/Slave_Table.png")
 

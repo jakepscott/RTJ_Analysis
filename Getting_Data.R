@@ -4,6 +4,7 @@ library(Rspotify)
 library(genius)
 library(geniusr)
 
+#To those using this code: You will need to make your own spotify key
 source("Spotify_Key.R")
 
 # Getting Tibble of RTJ Albums and Songs -------------------------------------------------------

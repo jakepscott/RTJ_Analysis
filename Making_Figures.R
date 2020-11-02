@@ -10,9 +10,10 @@ RTJ_lyrics <- RTJ_lyrics %>% anti_join(stop_words)
 
 
 # tf_idf ------------------------------------------------------------------
+#Getting tf-idf
 tf_idf <- RTJ_lyrics %>% count(album,word_clean) %>% bind_tf_idf(term = word_clean,document = album,n = n)
 
-#Basic Plot
+#Make basic plot
 tf_idf %>% 
   group_by(album) %>% 
   top_n(10, tf_idf) %>% 
@@ -25,7 +26,9 @@ tf_idf %>%
   scale_y_continuous(expand=c(0,0))
 
 
-#Smoothing the graph
+#Smoothing the graph. To plot the bars using album covers, I need a sequence of tf-idf values leading up
+#to the actual value for each word album pair, so I can place an album cover each interval up to 
+#the actual value using ggimage.
 top_10_tf_idf <- tf_idf %>% 
   group_by(album) %>% 
   top_n(10,tf_idf) %>% 
@@ -34,6 +37,8 @@ top_10_tf_idf <- tf_idf %>%
 #Plot with album cover for bars
 smooth_top_10_tf_idf <- top_10_tf_idf %>% head(0) %>% mutate(difference_smooth=double(0))
 
+#For every word album pair for the top ten words by tf-idf for each album,
+#I get a sequence of values up to the actual tf-idf value
 for (i in 1:nrow(top_10_tf_idf)) {
   print(i)
   for (z in seq(0,top_10_tf_idf$tf_idf[i],by=.001)) {
@@ -42,12 +47,14 @@ for (i in 1:nrow(top_10_tf_idf)) {
   }
 }
 
+#Making a tibble of links for each album
 album_covers <- tibble(album=c("Run the Jewels", "RTJ 2", "RTJ 3", "RTJ 4"),
                        album_cover=c("Data/RTJ1_Album_Cover.PNG",
                                      "Data/RTJ2_Album_Cover.PNG",
                                      "Data/RTJ3_Album_Cover.PNG",
                                      "Data/RTJ4_Album_Cover.PNG"))
 
+#Joining album links so each album cover is paired with each word
 smooth_top_10_tf_idf <- left_join(smooth_top_10_tf_idf,album_covers)
 
 #Making album back into an ordered factor
@@ -61,6 +68,7 @@ smooth_top_10_tf_idf$album <- factor(smooth_top_10_tf_idf$album,
                                              "RTJ 3",
                                              "RTJ 4"))
 
+#Plotting with album covers for bar
 smooth_top_10_tf_idf %>%
   dplyr::filter(!(word_clean %in% 
                    c("3", "anchors","begins","cats", "choppy","cowering", "molly", "shawty"))) %>% 
@@ -88,78 +96,18 @@ smooth_top_10_tf_idf %>%
         strip.text = element_text(face="bold",colour = "white",size=rel(1)),
         plot.background = element_rect(fill="grey20"))
 
-ggsave("Figures/tfidf.png", dpi=600)
-
- # Getting Outside Proportion ----------------------------------------------
-#First I make an empty tibble which will eventually contain the album, word, and proportion
-#of all words made up by that word outside the given album. So if the album is RTJ2 and the word
-#is run, the percent_outside column will be the proportion of words outside RTJ2 that are "run"
-outside_values <- tibble(album=character(0),word=character(0),percent_outside=double(0))
-tictoc::tic()
-for (i in c("Run the Jewels", "RTJ 2", "RTJ 3", "RTJ 4")) {
-  print(i)
-  for (z in RTJ_lyrics %>% filter(album==i) %>% distinct(word) %>% pull(word)) {
-    #Get the number of words outside the album
-    total_outside_words <- RTJ_lyrics %>% 
-      filter(album!=i) %>% 
-      distinct(word) %>% 
-      nrow() 
-    #Get the number of times the given word appears outside the given album
-    total_word_of_interest_outside <- RTJ_lyrics %>% 
-      filter(album!=i,
-             word==z) %>% 
-      nrow()
-    #Make the proportion
-    percent_outside_to_paste <- (total_word_of_interest_outside/total_outside_words)*100
-    #Make into a tibble
-    to_bind <- tibble(album=i,word=z,percent_outside=percent_outside_to_paste)
-    #Bind onto a big tibble which will have each album-word pair and the corresponding percent_outside column
-    outside_values <- outside_values %>% rbind(to_bind)
-  }
-}
-tictoc::toc()
-#Join the outside_values tibble to the RTJ_lyrics tibble, so for each word with will now have the value
-#for the proportion of words outside the given album are made up by that given word. So if the album is
-#RTJ4 and the word is week, the percent_outside column, which is .029, means that week makes up .029% of words in 
-#RTJ1,RTJ2,and RTJ3
-Relative_Importance <- RTJ_lyrics %>% 
-  select(album,word,word_clean) %>% 
-  left_join(outside_values,by=c("album","word"))
-
-#Making album back into an ordered factor
-Relative_Importance$album <- factor(Relative_Importance$album,
-                          levels=c("Run the Jewels",
-                                   "RTJ 2",
-                                   "RTJ 3",
-                                   "RTJ 4"),
-                          labels=c("Run the Jewels",
-                                   "RTJ 2",
-                                   "RTJ 3",
-                                   "RTJ 4"))
+#Saving plot
+#ggsave("Figures/tfidf.png", dpi=600)
 
 
-# Getting Within Album Proportion -----------------------------------------
-Relative_Importance <- Relative_Importance %>% 
-  group_by(album,word) %>% 
-  mutate(n=n()) %>% 
-  ungroup() %>% 
-  group_by(album) %>% 
-  mutate(total_words=n()) %>% 
-  ungroup() %>%
-  mutate(percent_inside=(n/total_words)*100)
 
-
-# Getting Difference ------------------------------------------------------
-Relative_Importance <- Relative_Importance %>% mutate(difference=percent_inside-percent_outside)
-
-#Saving so I don't need to run the above for loop each time
-saveRDS(Relative_Importance,"Data/Relative_Importance.rds")
-
-# Graphing ----------------------------------------------------------------
+# Proportional Importance ----------------------------------------------------------------
+#Loading data
 Relative_Importance <- read_rds("Data/Relative_Importance.rds")
+#Removing duplicate rows
 Relative_Importance_Clean <- Relative_Importance %>% distinct(album,word,.keep_all = T)
 
-
+#Making a basic plot
 Relative_Importance_Clean %>% 
   group_by(album) %>% 
   top_n(10,difference) %>% 
@@ -174,14 +122,16 @@ Relative_Importance_Clean %>%
 
 
 # Graphing with Album Covers ----------------------------------------------
-
+#Making a tibble of links for each album
 album_covers <- tibble(album=c("Run the Jewels", "RTJ 2", "RTJ 3", "RTJ 4"),
                        album_cover=c("Data/RTJ1_Album_Cover.PNG",
                                      "Data/RTJ2_Album_Cover.PNG",
                                      "Data/RTJ3_Album_Cover.PNG",
                                      "Data/RTJ4_Album_Cover.PNG"))
-
+#Joining album links so each album cover is paired with each word
 Relative_Importance_Clean <- left_join(Relative_Importance_Clean,album_covers)
+
+#Making album back into an ordered factor
 Relative_Importance_Clean$album <- factor(Relative_Importance_Clean$album,
                      levels=c("Run the Jewels",
                               "RTJ 2",
@@ -193,9 +143,10 @@ Relative_Importance_Clean$album <- factor(Relative_Importance_Clean$album,
                               "RTJ 4"))
 
 
+#Smoothing the graph. To plot the bars using album covers, I need a sequence of prop-importance values 
+#leading up to the actual value for each word album pair, so I can place an album cover each interval up to 
+#the actual value using ggimage.
 
-
-#Smoothing the graph
 top_10 <- Relative_Importance_Clean %>% 
   group_by(album) %>% 
   top_n(10,difference) %>% 
@@ -203,6 +154,8 @@ top_10 <- Relative_Importance_Clean %>%
 
 smooth_top_10 <- top_10 %>% head(0) %>% mutate(difference_smooth=double(0))
 
+#For every word album pair for the top ten words by prop-importance for each album,
+#I get a sequence of values up to the actual tf-idf value
 for (i in 1:nrow(top_10)) {
   print(i)
   for (z in seq(0,top_10$difference[i],by=.1)) {
@@ -211,7 +164,7 @@ for (i in 1:nrow(top_10)) {
   }
 }
 
-
+#graphing with album covers for bars
 smooth_top_10 %>%
   mutate(word_clean=reorder_within(x=word_clean,by = difference,within = album)) %>% 
   ggplot(aes(x=word_clean,y=difference_smooth,fill=album)) +
@@ -237,4 +190,5 @@ smooth_top_10 %>%
         strip.text = element_text(face="bold",colour = "white",size=rel(1)),
         plot.background = element_rect(fill="grey20"))
 
-ggsave("Figures/PI.png", dpi=600)
+#Saving plot
+#ggsave("Figures/PI.png", dpi=600)
