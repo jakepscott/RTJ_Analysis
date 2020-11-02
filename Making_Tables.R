@@ -1,4 +1,4 @@
-library(gtable)
+library(gt)
 library(tidyverse)
 library(readr)
 library(tidytext)
