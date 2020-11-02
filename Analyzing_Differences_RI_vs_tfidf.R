@@ -1,5 +1,17 @@
+library(gtable)
+library(tidyverse)
+library(readr)
+library(tidytext)
 
-# Getting Top words using tf_idf and my measure ---------------------------
+windowsFonts(`Roboto Condensed`=windowsFont("Roboto Condensed"))
+RTJ_lyrics <- read_rds("Data/RTJ_lyrics.rds")
+data("stop_words")
+RTJ_lyrics <- RTJ_lyrics %>% anti_join(stop_words)
+
+# Gettiing Data -----------------------------------------------------------
+tf_idf <- RTJ_lyrics %>% count(album,word_clean) %>% bind_tf_idf(term = word_clean,document = album,n = n)
+Relative_Importance <- read_rds("Data/Relative_Importance.rds")
+Relative_Importance_Clean <- Relative_Importance %>% distinct(album,word,.keep_all = T)
 
 #tf_idf
 top_10_tf_idf <- tf_idf %>% 
@@ -8,8 +20,10 @@ top_10_tf_idf <- tf_idf %>%
   ungroup()
 
 #My measure
-top_10_RI <- top_10
-
+top_10_RI <- Relative_Importance_Clean %>% 
+  group_by(album) %>% 
+  top_n(10,difference) %>% 
+  ungroup()
 
 # What words does mine grab but tf_idf does not and why --------------------
 top_10_RI %>% anti_join(top_10_tf_idf)
@@ -25,7 +39,7 @@ for (i in (top_10_RI %>% anti_join(top_10_tf_idf) %>% pull(word_clean))) {
 
 # Which ones my measure picks up but tf-idf doesn't -----------------------
 diffs_mine %>% arrange(word_clean,desc(n)) %>% left_join(Relative_Importance_Clean) %>% 
-  select(album, word_clean,n,percent_inside,percent_outside,difference,tf,idf,tf_idf) %>% View()
+  select(album, word_clean,n,percent_inside,percent_outside,difference,tf,idf,tf_idf) 
 
 
 # Zero Value Issue --------------------------------------------------------
@@ -81,7 +95,7 @@ top_10_tf_idf %>% filter(album=="RTJ 2") %>% arrange(desc(tf_idf))
 
 
 # What  words does tf_idf grab but mine does not and why --------------------
-top_10_tf_idf %>% anti_join(top_10_RI) %>% View()
+top_10_tf_idf %>% anti_join(top_10_RI) 
 
 diffs_tf <- Relative_Importance %>% head(0)
 for (i in (top_10_tf_idf %>% anti_join(top_10_RI) %>% pull(word_clean))) {

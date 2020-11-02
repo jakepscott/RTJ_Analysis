@@ -62,6 +62,8 @@ smooth_top_10_tf_idf$album <- factor(smooth_top_10_tf_idf$album,
                                              "RTJ 4"))
 
 smooth_top_10_tf_idf %>%
+  dplyr::filter(!(word_clean %in% 
+                   c("3", "anchors","begins","cats", "choppy","cowering", "molly", "shawty"))) %>% 
   mutate(word_clean=reorder_within(x=word_clean,by = tf_idf,within = album)) %>% 
   ggplot(aes(x=word_clean,y=tf_idf_smooth,fill=album)) +
   geom_image(aes(image=album_cover),asp = 2, size = .035) +
@@ -70,20 +72,23 @@ smooth_top_10_tf_idf %>%
   scale_x_reordered() +
   labs(y="Relative Importance",
        caption = "Plot: @jakepscott2020 | Data: Spotify and Genius",
-       title="Which words are uniquely important for each album?",
-       subtitle = "Relative importance calculated using term frequency inverse document frequency") +
+       title="Which words does tf-idf indentify as uniquely important?",
+       subtitle = "Using term frequency-inverse document frequency") +
   theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
   theme(plot.title.position = "plot",
-        plot.title = element_text(face="bold", size = rel(2.5), color="white"),
+        plot.title = element_text(face="bold", size = rel(1.5), color="white"),
         plot.subtitle = element_text(size=rel(1),colour = "grey70"),
         plot.caption = element_text(face = "italic", size = rel(0.8), 
                                     color = "grey70"),
         axis.title.y = element_blank(),
-        axis.title.x = element_text(color="white"),
-        axis.text = element_text(color="white",size = rel(1)), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(color="white",size = rel(.7)),
+        axis.text.y = element_text(color="white",size = rel(1)), 
         panel.grid = element_blank(),
-        strip.text = element_text(face="bold",colour = "white",size=rel(1.2)),
+        strip.text = element_text(face="bold",colour = "white",size=rel(1)),
         plot.background = element_rect(fill="grey20"))
+
+ggsave("Figures/tfidf.png", dpi=600)
 
  # Getting Outside Proportion ----------------------------------------------
 #First I make an empty tibble which will eventually contain the album, word, and proportion
@@ -216,19 +221,20 @@ smooth_top_10 %>%
   scale_x_reordered() +
   labs(y="Relative Importance",
        caption = "Plot: @jakepscott2020 | Data: Spotify and Genius",
-       title="Which words are uniquely important for each album?",
-       subtitle = "Relative importance calculated by subtracting percent of words made up by a given word outside of a given album from the percent of total words within that album made up by that word") +
+       title="Which words does porportional importance identify as uniquely \nimportant?",
+       subtitle = "Horizontal axis measured in percentage point terms, multiplying proportion by 100") +
   theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
   theme(plot.title.position = "plot",
-        plot.title = element_text(face="bold", size = rel(2.5), color="white"),
+        plot.title = element_text(face="bold", size = rel(1.5), color="white"),
         plot.subtitle = element_text(size=rel(1),colour = "grey70"),
         plot.caption = element_text(face = "italic", size = rel(0.8), 
                                     color = "grey70"),
         axis.title.y = element_blank(),
-        axis.title.x = element_text(color="white"),
-        axis.text = element_text(color="white",size = rel(1)), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(color="white",size = rel(.7)),
+        axis.text.y = element_text(color="white",size = rel(1)), 
         panel.grid = element_blank(),
-        strip.text = element_text(face="bold",colour = "white",size=rel(1.2)),
+        strip.text = element_text(face="bold",colour = "white",size=rel(1)),
         plot.background = element_rect(fill="grey20"))
 
-  
+ggsave("Figures/PI.png", dpi=600)

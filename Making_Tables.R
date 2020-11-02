@@ -1,5 +1,39 @@
 library(gtable)
 library(tidyverse)
+library(readr)
+library(tidytext)
+
+windowsFonts(`Roboto Condensed`=windowsFont("Roboto Condensed"))
+RTJ_lyrics <- read_rds("Data/RTJ_lyrics.rds")
+data("stop_words")
+RTJ_lyrics <- RTJ_lyrics %>% anti_join(stop_words)
+
+# Gettiing Data -----------------------------------------------------------
+tf_idf <- RTJ_lyrics %>% count(album,word_clean) %>% bind_tf_idf(term = word_clean,document = album,n = n)
+Relative_Importance <- read_rds("Data/Relative_Importance.rds")
+Relative_Importance_Clean <- Relative_Importance %>% distinct(album,word,.keep_all = T)
+
+#tf_idf
+top_10_tf_idf <- tf_idf %>% 
+  group_by(album) %>%
+  top_n(10, tf_idf) %>%
+  ungroup()
+
+#My measure
+top_10_RI <- Relative_Importance_Clean %>% 
+  group_by(album) %>% 
+  top_n(10,difference) %>% 
+  ungroup()
+
+
+#This filters the dataframe of important words from my measure to just hold the ones not captured by 
+#tf_idf
+diffs_mine <- tf_idf %>% head(0)
+for (i in (top_10_RI %>% anti_join(top_10_tf_idf) %>% pull(word_clean))) {
+  to_bind <- tf_idf %>% filter(word_clean==i)
+  diffs_mine <- diffs_mine %>% rbind(to_bind)
+}
+
 
 # Setting up data ---------------------------------------------------------
 table <- diffs_mine %>% 
@@ -16,7 +50,7 @@ table <- diffs_mine %>%
 
 
 # Kill --------------------------------------------------------------------
-table %>% 
+(kill <- table %>% 
   filter(word_clean=="kill") %>% 
   select(-word_clean) %>% 
   select("Album"=album,
@@ -36,7 +70,8 @@ table %>%
     table_body.hlines.color = "white",
     table.border.bottom.color = "white",
     table.border.bottom.width = px(3),
-    heading.align = "center"
+    heading.align = "center",
+    table.font.names = "Roboto Condensed"
   ) %>% 
   #opt_align_table_header(align = "left") %>%  
   cols_align(align = "right",
@@ -48,6 +83,8 @@ table %>%
       palette = c("white", "#3fc1c9"),
       domain = NULL
     ))
+)
+gtsave(kill,"Figures/Kill_Table.png")
 
 
 # run ---------------------------------------------------------------------
@@ -72,7 +109,8 @@ table %>%
     table_body.hlines.color = "white",
     table.border.bottom.color = "white",
     table.border.bottom.width = px(3),
-    heading.align = "center"
+    heading.align = "center",
+    table.font.names = "Roboto Condensed"
   ) %>% 
   #opt_align_table_header(align = "left") %>%  
   cols_align(align = "right",
@@ -107,7 +145,8 @@ table %>%
     table_body.hlines.color = "white",
     table.border.bottom.color = "white",
     table.border.bottom.width = px(3),
-    heading.align = "center"
+    heading.align = "center",
+    table.font.names = "Roboto Condensed"
   ) %>% 
   #opt_align_table_header(align = "left") %>%  
   cols_align(align = "right",
@@ -122,7 +161,7 @@ table %>%
 
 # Slave ---------------------------------------------------------------------
 
-table %>% 
+(Slave <- table %>% 
   filter(word_clean=="slave") %>% 
   select(-word_clean) %>% 
   select("Album"=album,
@@ -142,7 +181,8 @@ table %>%
     table_body.hlines.color = "white",
     table.border.bottom.color = "white",
     table.border.bottom.width = px(3),
-    heading.align = "center"
+    heading.align = "center",
+    table.font.names = "Roboto Condensed"
   ) %>% 
   #opt_align_table_header(align = "left") %>%  
   cols_align(align = "right",
@@ -154,3 +194,6 @@ table %>%
       palette = c("white", "#3fc1c9"),
       domain = NULL
     ))
+)
+gtsave(Slave,"Figures/Slave_Table.png")
+
