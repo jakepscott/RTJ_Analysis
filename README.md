@@ -23,7 +23,7 @@ To run the code on your computer you need R and the following packages installed
 library(tidyverse)
 library(readr)
 library(tidytext)
-library(gtable)
+library(gt)
 library(Rspotify)
 library(geniusr)
 library(genius)
