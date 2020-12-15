@@ -2,6 +2,7 @@ library(tidyverse)
 library(readr)
 library(tidytext)
 library(ggimage)
+library(stringr)
 
 windowsFonts(`Roboto Condensed`=windowsFont("Roboto Condensed"))
 RTJ_lyrics <- read_rds("Data/RTJ_lyrics.rds")
@@ -32,7 +33,8 @@ tf_idf %>%
 top_10_tf_idf <- tf_idf %>% 
   group_by(album) %>% 
   top_n(10,tf_idf) %>% 
-  ungroup()
+  ungroup() %>% 
+  mutate(word_clean=str_to_title(word_clean))
 
 #Plot with album cover for bars
 smooth_top_10_tf_idf <- top_10_tf_idf %>% head(0) %>% mutate(difference_smooth=double(0))
@@ -151,7 +153,8 @@ Relative_Importance_Clean$album <- factor(Relative_Importance_Clean$album,
 top_10 <- Relative_Importance_Clean %>% 
   group_by(album) %>% 
   top_n(10,difference) %>% 
-  ungroup()
+  ungroup() %>% 
+  mutate(word_clean=str_to_title(word_clean))
 
 smooth_top_10 <- top_10 %>% head(0) %>% mutate(difference_smooth=double(0))
 
@@ -175,8 +178,8 @@ smooth_top_10 %>%
   scale_x_reordered() +
   labs(y="Relative Importance",
        caption = "Plot: @jakepscott2020 | Data: Spotify and Genius",
-       title="Which words does porportional importance identify as uniquely \nimportant?",
-       subtitle = "Horizontal axis measured in percentage point terms, multiplying proportion by 100") +
+       title="Which words does proportional importance \nidentify as uniquely important?",
+       subtitle = "Horizontal axis measured in percentage point terms, multiplying proportion \nby 100") +
   theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
   theme(plot.title.position = "plot",
         plot.title = element_text(face="bold", size = rel(1.5), color="white"),

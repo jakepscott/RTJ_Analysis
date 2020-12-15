@@ -20,7 +20,7 @@ for (i in c("Run the Jewels", "RTJ 2", "RTJ 3", "RTJ 4")) {
     #Get the number of words outside the album
     total_outside_words <- RTJ_lyrics %>% 
       filter(album!=i) %>% 
-      distinct(word) %>% 
+      #distinct(word) %>% 
       nrow() 
     #Get the number of times the given word appears outside the given album
     total_word_of_interest_outside <- RTJ_lyrics %>% 
