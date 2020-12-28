@@ -82,8 +82,7 @@ smooth_top_10_tf_idf %>%
   scale_x_reordered() +
   labs(y="Relative Importance",
        caption = "Plot: @jakepscott2020 | Data: Spotify and Genius",
-       title=expression(paste("Which words does ", italic("tf-idf"), " identify as uniquely important?", 
-                              sep = " ")),
+       title="Which words does tf-idf identify as uniquely \nimportant?",
        subtitle = "Using term frequency-inverse document frequency") +
   theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
   theme(plot.title.position = "plot",
@@ -100,7 +99,7 @@ smooth_top_10_tf_idf %>%
         plot.background = element_rect(fill="grey20"))
 
 #Saving plot
-#ggsave("Figures/tfidf.png", dpi=600)
+ggsave("Figures/tfidf.png", dpi=600)
 
 
 
